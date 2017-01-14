@@ -1,3 +1,17 @@
+# =========================
+# Python & PyCharm
+# =========================
+
+.idea/
+_Source_/
+_OLD RATIO_/
+database/
+*.pyc
+
+# =========================
+# Windows
+# =========================
+
 # Windows image file caches
 Thumbs.db
 ehthumbs.db
@@ -18,9 +32,6 @@ $RECYCLE.BIN/
 *.lnk
 
 # =========================
-# Operating System Files
-# =========================
-
 # OSX
 # =========================
 
