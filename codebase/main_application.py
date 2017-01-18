@@ -24,8 +24,11 @@ def processsubfolder(currentfoldername, sourcerootpath, destinationrootpath, cur
 	directorylisting = File.getfolderlisting(sourcefolderpath)
 	itemnamelist = directorylisting.keys()
 	itemnamelist.sort()
-	filecount = 0
-	foldercount = 0
+	sourcefilecount = 0
+	sourcefoldercount = 0
+	targetfilecount = 0
+	targetfoldercount = 0
+
 	errorcount = 0
 
 	# Process subfolders and files
@@ -33,30 +36,40 @@ def processsubfolder(currentfoldername, sourcerootpath, destinationrootpath, cur
 
 		if (directorylisting[itemname] == "Folder") and (itemname != "@eaDir"):
 
-			newsubfolderpath = File.concatenatepaths(targetfolderpath, itemname)
-			if File.makefolder(newsubfolderpath) == True:
-				foldercount = foldercount + 1
-			else:
-				currentlogs.logerror("Cannot Make Folder - " + newsubfolderpath)
-				errorcount = errorcount + 1
+			if itemname == "@eaDir":
 
-			newsubfolder = File.concatenatepaths(currentsubfolder, itemname)
-			print newsubfolder
-			currentlogs = processsubfolder(itemname, sourcerootpath, destinationrootpath, newsubfolder, currentlogs)
+				print "Found @eaDir at ", currentsubfolder
+
+			else:
+
+				sourcefoldercount = sourcefoldercount + 1
+
+				targetpath = File.concatenatepaths(targetfolderpath, itemname)
+				if File.doesexist(targetpath) == True:
+					targetfoldercount = targetfoldercount + 1
+				else:
+					currentlogs.logerror("Cannot see Folder - " + targetpath)
+					errorcount = errorcount + 1
+
+				newsubfolder = File.concatenatepaths(currentsubfolder, itemname)
+				print newsubfolder
+				currentlogs = processsubfolder(itemname, sourcerootpath, destinationrootpath, newsubfolder, currentlogs)
 
 		elif directorylisting[itemname] == "File":
 
-			sourcefile = File.concatenatepaths(sourcefolderpath, itemname)
-			targetfile = File.concatenatepaths(targetfolderpath, itemname)
-			if File.copyfile(sourcefile, targetfile) == True:
-				filecount = filecount + 1
+			sourcefilecount = sourcefilecount + 1
+
+			targetpath = File.concatenatepaths(targetfolderpath, itemname)
+			if File.doesexist(targetpath) == True:
+				targetfilecount = targetfilecount + 1
 			else:
-				currentlogs.logerror("Cannot Copy File - " + targetfile)
+				currentlogs.logerror("Cannot see File - " + targetpath)
 				errorcount = errorcount + 1
 
 		else:
 			assert directorylisting[itemname] == "Folder", "Unknown File System Object Type"
 
-	currentlogs.logcompletedfolder(currentfoldername, currentsubfolder, filecount, foldercount, errorcount)
+	currentlogs.logcompletedfolder(currentfoldername, currentsubfolder, sourcefilecount, targetfilecount,
+																	sourcefoldercount, targetfoldercount, errorcount)
 
 	return currentlogs
