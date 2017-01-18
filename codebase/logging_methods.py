@@ -6,6 +6,7 @@ class ApplicationLogs():
 	def __init__(self):
 		self.applog = ['Application Log', '==============================']
 		self.errorlog = ['Error Log', '==============================']
+		self.dellog = ['Delete Log', '==============================']
 		self.sourcefoldercount = 0
 		self.targetfoldercount = 0
 		self.sourcefilecount = 0
@@ -17,6 +18,9 @@ class ApplicationLogs():
 		self.applog.append(newentry)
 
 
+	def logdelete(self, newentry):
+		self.dellog.append(newentry)
+
 
 	def logerror(self, newentry):
 		self.errorlog.append(newentry)
@@ -27,11 +31,16 @@ class ApplicationLogs():
 		self.logaction('==============================')
 		self.logcompletedfolder("TOTAL", "TOTAL", self.sourcefilecount, self.targetfilecount,
 							self.sourcefoldercount, self.targetfoldercount, self.errorcount)
+		File.writetodisk(File.concatenatepaths(destinationfolder, "Tree-Compare-Outcomes.log"), self.applog)
 
 
 		self.logerror('==============================')
-		File.writetodisk(File.concatenatepaths(destinationfolder, "Tree-Compare-Outcomes.log"), self.applog)
 		File.writetodisk(File.concatenatepaths(destinationfolder, "Tree-Compare-Errors.log"), self.errorlog)
+
+
+
+		self.logdelete('==============================')
+		File.writetodisk(File.concatenatepaths(destinationfolder, "Tree-Compare-Deletions.log"), self.dellog)
 
 
 

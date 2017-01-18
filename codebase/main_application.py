@@ -2,19 +2,19 @@ from common_components.fileprocessing_framework import fileprocessing_module as 
 from . import logging_methods as Log
 
 
-def runapplication(sourcerootpath, destinationrootpath):
+def runapplication(sourcerootpath, destinationrootpath, deletemode):
 
 	print "==========================================="
 
 	initiallogs = Log.ApplicationLogs()
-	finallogs = processsubfolder("!ROOT!", sourcerootpath, destinationrootpath, "", initiallogs)
+	finallogs = processsubfolder("!ROOT!", sourcerootpath, destinationrootpath, "", initiallogs, deletemode)
 	finallogs.writelogs(destinationrootpath)
 
 
 
 
 
-def processsubfolder(currentfoldername, sourcerootpath, destinationrootpath, currentsubfolder, logsstart):
+def processsubfolder(currentfoldername, sourcerootpath, destinationrootpath, currentsubfolder, logsstart, deletemode):
 
 	currentlogs = logsstart
 
@@ -34,11 +34,22 @@ def processsubfolder(currentfoldername, sourcerootpath, destinationrootpath, cur
 	# Process subfolders and files
 	for itemname in itemnamelist:
 
-		if (directorylisting[itemname] == "Folder") and (itemname != "@eaDir"):
+		if (directorylisting[itemname] == "Folder"):
 
 			if itemname == "@eaDir":
 
-				print "Found @eaDir at ", currentsubfolder
+				print "Found @eaDir in ", currentsubfolder
+				currentlogs.logaction("Found @eaDir in " + targetfolderpath)
+
+				targetpath = File.concatenatepaths(targetfolderpath, itemname)
+				if deletemode == True:
+					if File.deletefolder(targetpath) == True:
+						currentlogs.logdelete("Successfully deleted " + targetpath)
+					else:
+						currentlogs.logdelete("Failed to delete " + targetpath)
+				else:
+					currentlogs.logdelete(targetpath + " NOT deleted")
+
 
 			else:
 
@@ -53,7 +64,8 @@ def processsubfolder(currentfoldername, sourcerootpath, destinationrootpath, cur
 
 				newsubfolder = File.concatenatepaths(currentsubfolder, itemname)
 				print newsubfolder
-				currentlogs = processsubfolder(itemname, sourcerootpath, destinationrootpath, newsubfolder, currentlogs)
+				currentlogs = processsubfolder(itemname, sourcerootpath, destinationrootpath, newsubfolder, currentlogs,
+																											deletemode)
 
 		elif directorylisting[itemname] == "File":
 
