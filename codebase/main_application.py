@@ -1,98 +1,62 @@
 from common_components.fileprocessing_framework import fileprocessing_module as File
-from . import filename_methods as FileName
-from . import indexfile_methods as IndexFile
-from . import nfooutput_methods as FileOutput
+from . import logging_methods as Log
 
 
-def runapplication(rootfolderpath):
-
+def runapplication(sourcerootpath, destinationrootpath):
 
 	print "==========================================="
 
-	rootfilelist = File.getfolderlisting(rootfolderpath)
-
-	nfocount = 0
-
-	rootitemnamelist = rootfilelist.keys()
-	rootitemnamelist.sort()
-	for rootitemname in rootitemnamelist:
-
-		if rootfilelist[rootitemname] == "Folder":
-			nfocount = processsubfolder(rootfolderpath, rootitemname, "", "", nfocount)
-
-	print "==========================================="
-	print str(nfocount) + " NFOs processed"
-	print "==========================================="
+	initiallogs = Log.ApplicationLogs()
+	finallogs = processsubfolder("!ROOT!", sourcerootpath, destinationrootpath, "", initiallogs)
+	finallogs.writelogs(destinationrootpath)
 
 
 
-def processsubfolder(parentfolderpath, subfoldername, setname, nameprefix, nfocount):
 
-	newnfocount = nfocount
-	subfolderpath = File.concatenatepaths(parentfolderpath, subfoldername)
-	#print "==========================================="
-	#print subfolderpath
 
-	directorylisting = File.getfolderlisting(subfolderpath)
+def processsubfolder(currentfoldername, sourcerootpath, destinationrootpath, currentsubfolder, logsstart):
+
+	currentlogs = logsstart
+
+	sourcefolderpath = File.concatenatepaths(sourcerootpath, currentsubfolder)
+	targetfolderpath = File.concatenatepaths(destinationrootpath, currentsubfolder)
+
+	directorylisting = File.getfolderlisting(sourcefolderpath)
 	itemnamelist = directorylisting.keys()
 	itemnamelist.sort()
+	filecount = 0
+	foldercount = 0
+	errorcount = 0
 
-	movielist = {}
+	# Process subfolders and files
+	for itemname in itemnamelist:
 
-	# Determine what the current set is
-	newsetname = IndexFile.determinemovieset(subfolderpath, setname)
+		if (directorylisting[itemname] == "Folder") and (itemname != "@eaDir"):
 
-	if newsetname != "":
+			newsubfolderpath = File.concatenatepaths(targetfolderpath, itemname)
+			if File.makefolder(newsubfolderpath) == True:
+				foldercount = foldercount + 1
+			else:
+				currentlogs.logerror("Cannot Make Folder - " + newsubfolderpath)
+				errorcount = errorcount + 1
 
-		newnameprefix = IndexFile.determinenameprefix(subfolderpath, nameprefix)
+			newsubfolder = File.concatenatepaths(currentsubfolder, itemname)
+			print newsubfolder
+			currentlogs = processsubfolder(itemname, sourcerootpath, destinationrootpath, newsubfolder, currentlogs)
 
-		# Process Movies files if a multimovie folder
-		multimovieflag = IndexFile.determinefoldertype(subfolderpath)
-		if multimovieflag == True:
-			for itemname in itemnamelist:
-				if directorylisting[itemname] == "File":
-					if FileName.getfiletype(itemname) == "Movie":
-						sanitiseditemname = FileName.getsanitisedfilename(itemname)
-						if sanitiseditemname in movielist.keys():
-							print "     Duplicate movie name: ",sanitiseditemname , " ignored from ", itemname
-						else:
-							movielist[sanitiseditemname] = ""
-							#print "     Multi Movie:", itemname, " captured as ", sanitiseditemname
+		elif directorylisting[itemname] == "File":
 
-		# Process single movie if at least one movie file present
+			sourcefile = File.concatenatepaths(sourcefolderpath, itemname)
+			targetfile = File.concatenatepaths(targetfolderpath, itemname)
+			if File.copyfile(sourcefile, targetfile) == True:
+				filecount = filecount + 1
+			else:
+				currentlogs.logerror("Cannot Copy File - " + targetfile)
+				errorcount = errorcount + 1
+
 		else:
-			ismoviepresent = False
-			for itemname in itemnamelist:
-				if directorylisting[itemname] == "File":
-					if FileName.getfiletype(itemname) == "Movie":
-						ismoviepresent = True
-			if ismoviepresent == True:
-				movielist[subfoldername] = ""
-				#print "     Single Movie:", subfoldername, " assumed "
-			#else:
-				#print "     Folder contains no movies"
+			assert directorylisting[itemname] == "Folder", "Unknown File System Object Type"
 
+	currentlogs.logcompletedfolder(currentfoldername, currentsubfolder, filecount, foldercount, errorcount)
 
-		# Process Images
-		for itemname in itemnamelist:
-			if directorylisting[itemname] == "File":
-				if FileName.getfiletype(itemname) == "Image":
-					sanitiseditemname = FileName.getsanitisedfilename(itemname)
-					if sanitiseditemname in movielist.keys():
-						movielist[FileName.getsanitisedfilename(itemname)] = itemname
-						#print "     Image:", itemname, " captured for ", sanitiseditemname
-					#else:
-						#print "     Ignored Image:", itemname
-
-
-		# Write NFOs
-		newnfocount = FileOutput.outputnfos(subfolderpath, movielist, newsetname, newnameprefix, newnfocount)
-
-
-		# Process subfolders
-		for itemname in itemnamelist:
-			if directorylisting[itemname] == "Folder":
-				newnfocount = processsubfolder(subfolderpath, itemname, newsetname, newnameprefix, newnfocount)
-
-
-	return newnfocount
+	return currentlogs

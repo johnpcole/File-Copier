@@ -1,7 +1,7 @@
-from codebase import main_application as CrystalDefenders
+from codebase import main_application as FileCopier
 
 
 
 print "Application Started"
-CrystalDefenders.runapplication("V:\\")
+FileCopier.runapplication("C:\\test1", "C:\\test2")
 print "Application Ended"
