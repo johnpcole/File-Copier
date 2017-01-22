@@ -211,3 +211,22 @@ def makefolder(fullpath):
 		outcome = False
 
 	return outcome
+
+
+
+# ---------------------------------------------
+# Deletes a folder
+# ---------------------------------------------
+
+def deletefolder(fullpath):
+
+	outcome = True
+
+	try:
+		FileSystem.rmtree(fullpath)
+
+	except:
+		print "Cannot delete folder - ", fullpath
+		outcome = False
+
+	return outcome
